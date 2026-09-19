@@ -74,6 +74,92 @@ const fallbackStatuses: PlaceStatus[] = [
   { placeId: 'gallery', current: 18, capacity: 72, status: 'available', updatedAt: new Date().toISOString() },
 ];
 
+type CampusProfile = {
+  id: string;
+  shortName: string;
+  name: string;
+  city: string;
+  area: string;
+  tagline: string;
+  summary: {
+    buildings: number;
+    rooms: number;
+    activeEvents: number;
+    liveZones: number;
+  };
+  buildingNames: Record<string, string>;
+  placeNames: Record<string, string>;
+};
+
+const campusProfiles: CampusProfile[] = [
+  {
+    id: 'aitu',
+    shortName: 'AITU',
+    name: 'Astana IT University',
+    city: 'Astana',
+    area: 'EXPO campus',
+    tagline: 'Explore the digital campus of Kazakhstan’s technology university.',
+    summary: { buildings: 3, rooms: 42, activeEvents: 8, liveZones: 12 },
+    buildingNames: { c1: 'AITU Academic Block', c2: 'Innovation & Library', hub: 'Student Commons' },
+    placeNames: { 'room-c1-1-322': 'C1.1.322', 'room-c1-0-118': 'Computer Vision Lab', 'library-c2': 'AITU Library', 'coworking-hub': 'Astana Hub Co-working', 'canteen-hub': 'Atrium Canteen', 'deanery-c2': 'Student Services' },
+  },
+  {
+    id: 'kbtu',
+    shortName: 'KBTU',
+    name: 'Kazakh-British Technical University',
+    city: 'Almaty',
+    area: 'Panfilov district',
+    tagline: 'Find lecture rooms, labs and student services in central Almaty.',
+    summary: { buildings: 3, rooms: 68, activeEvents: 11, liveZones: 14 },
+    buildingNames: { c1: 'Main Academic Building', c2: 'Library & Labs', hub: 'Student Life Center' },
+    placeNames: { 'room-c1-1-322': 'C1.1.322 · Petroleum Lab', 'room-c1-0-118': 'Digital Systems Lab', 'library-c2': 'KBTU Library', 'coworking-hub': 'Tech Co-working', 'canteen-hub': 'KBTU Canteen', 'deanery-c2': 'Registrar Office' },
+  },
+  {
+    id: 'nu',
+    shortName: 'NU',
+    name: 'Nazarbayev University',
+    city: 'Astana',
+    area: 'Kabanbay Batyr Avenue',
+    tagline: 'Navigate the research campus from lecture hall to residential life.',
+    summary: { buildings: 3, rooms: 95, activeEvents: 16, liveZones: 21 },
+    buildingNames: { c1: 'School of Engineering', c2: 'Research Library', hub: 'Student Center' },
+    placeNames: { 'room-c1-1-322': 'Engineering Lecture Hall', 'room-c1-0-118': 'Robotics Laboratory', 'library-c2': 'Nazarbayev University Library', 'coworking-hub': 'Startup Garage', 'canteen-hub': 'Marketplace', 'deanery-c2': 'Registrar & Advising' },
+  },
+  {
+    id: 'kaznu',
+    shortName: 'KazNU',
+    name: 'Al-Farabi Kazakh National University',
+    city: 'Almaty',
+    area: 'Al-Farabi Avenue',
+    tagline: 'Move through the green campus and find your next class with confidence.',
+    summary: { buildings: 3, rooms: 120, activeEvents: 19, liveZones: 24 },
+    buildingNames: { c1: 'Academic Building 1', c2: 'Al-Farabi Library', hub: 'Student Palace' },
+    placeNames: { 'room-c1-1-322': 'Academic Room 1.322', 'room-c1-0-118': 'Natural Sciences Lab', 'library-c2': 'KazNU Library', 'coworking-hub': 'Open Study Hub', 'canteen-hub': 'Central Dining Hall', 'deanery-c2': 'Dean’s Office' },
+  },
+  {
+    id: 'sdu',
+    shortName: 'SDU',
+    name: 'Suleyman Demirel University',
+    city: 'Kaskelen',
+    area: 'SDU campus',
+    tagline: 'A clear spatial guide for classes, labs and everyday campus life.',
+    summary: { buildings: 3, rooms: 56, activeEvents: 9, liveZones: 13 },
+    buildingNames: { c1: 'Academic Building', c2: 'Library & Knowledge Center', hub: 'Student Hub' },
+    placeNames: { 'room-c1-1-322': 'Lecture Room 1.322', 'room-c1-0-118': 'Software Engineering Lab', 'library-c2': 'SDU Library', 'coworking-hub': 'Innovation Hub', 'canteen-hub': 'Campus Café', 'deanery-c2': 'Student Affairs' },
+  },
+  {
+    id: 'satbayev',
+    shortName: 'Satbayev',
+    name: 'Satbayev University',
+    city: 'Almaty',
+    area: 'Satbayev Street',
+    tagline: 'Discover the engineering campus and get to the right lab faster.',
+    summary: { buildings: 3, rooms: 84, activeEvents: 13, liveZones: 17 },
+    buildingNames: { c1: 'Institute of Automation', c2: 'Engineering Library', hub: 'Technology Center' },
+    placeNames: { 'room-c1-1-322': 'CAD & Design Room', 'room-c1-0-118': 'Mining Technology Lab', 'library-c2': 'Satbayev Library', 'coworking-hub': 'Digital Fabrication Hub', 'canteen-hub': 'Campus Dining', 'deanery-c2': 'Academic Affairs' },
+  },
+];
+
 function cn(...classes: Array<string | false | undefined>) {
   return classes.filter(Boolean).join(' ');
 }
@@ -259,6 +345,7 @@ function CampusMap({
 
 function CampusWorkspace() {
   const [search, setSearch] = useState('');
+  const [selectedUniversity, setSelectedUniversity] = useState('aitu');
   const [selectedBuilding, setSelectedBuilding] = useState<string | null>(null);
   const [activeFloor, setActiveFloor] = useState<number | 'all'>('all');
   const [selectedPlace, setSelectedPlace] = useState<CampusPlace | null>(null);
@@ -280,11 +367,20 @@ function CampusWorkspace() {
   const healthQuery = useHealthCheck({ query: { queryKey: getHealthCheckQueryKey(), refetchInterval: 60000 } });
   const routeMutation = useBuildRoute();
 
-  const buildings = buildingsQuery.data?.length ? buildingsQuery.data : fallbackBuildings;
+  const campusProfile = campusProfiles.find((campus) => campus.id === selectedUniversity) || campusProfiles[0];
+  const rawBuildings = buildingsQuery.data?.length ? buildingsQuery.data : fallbackBuildings;
+  const buildings = rawBuildings.map((building) => ({
+    ...building,
+    name: campusProfile.buildingNames[building.id] || building.name,
+  }));
   const apiPlaces = placesQuery.data?.length ? placesQuery.data : fallbackPlaces;
-  const places = apiPlaces.filter((place) => !accessibleOnly || place.accessible);
+  const mappedPlaces = apiPlaces.map((place) => ({
+    ...place,
+    name: campusProfile.placeNames[place.id] || place.name,
+  }));
+  const places = mappedPlaces.filter((place) => !accessibleOnly || place.accessible);
   const statuses = statusesQuery.data?.length ? statusesQuery.data : fallbackStatuses;
-  const campusSummary = summaryQuery.data || { buildings: 12, rooms: 284, activeEvents: 7, liveZones: 18 };
+  const campusSummary = campusProfile.summary || summaryQuery.data || { buildings: 12, rooms: 284, activeEvents: 7, liveZones: 18 };
   const activeBuilding = buildings.find((building) => building.id === selectedBuilding) || null;
   const activeStatus = selectedPlace ? statuses.find((status) => status.placeId === selectedPlace.id) : null;
   const currentPlace = selectedPlace || places[0] || fallbackPlaces[0];
@@ -296,6 +392,15 @@ function CampusWorkspace() {
     setSelectedBuilding(building.id);
     setActiveFloor('all');
     setSelectedPlace(null);
+  };
+
+  const selectUniversity = (universityId: string) => {
+    setSelectedUniversity(universityId);
+    setSelectedBuilding(null);
+    setActiveFloor('all');
+    setSelectedPlace(null);
+    setRouteOpen(false);
+    setSearch('');
   };
 
   const buildRoute = () => {
@@ -320,13 +425,24 @@ function CampusWorkspace() {
       <div className="mx-auto max-w-[1500px]">
         <section className="mb-6 flex flex-col justify-between gap-5 xl:flex-row xl:items-end">
           <div>
-            <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[.2em] text-[#4e8582]"><span className="h-1.5 w-1.5 rounded-full bg-[#54b4a2]" /> Tuesday, 14 May · 10:42</div>
+            <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[.2em] text-[#4e8582]"><span className="h-1.5 w-1.5 rounded-full bg-[#54b4a2]" /> {campusProfile.shortName} · {campusProfile.city}</div>
             <h1 className="mt-3 font-display text-[clamp(2rem,4vw,3.3rem)] font-semibold leading-[.98] tracking-[-.06em] text-[#193744]">Find your place<br className="hidden sm:block" /> on campus.</h1>
-            <p className="mt-3 max-w-[510px] text-sm leading-relaxed text-[#678285]">A live map for getting around, settling in, and knowing what is happening now.</p>
+            <p className="mt-3 max-w-[510px] text-sm leading-relaxed text-[#678285]">{campusProfile.tagline}</p>
           </div>
-          <div className="flex items-center gap-2 text-xs text-[#5f7a7d]">
-            <span className={cn('flex items-center gap-2 rounded-full border px-3 py-2', healthQuery.isError ? 'border-[#edc4bc] bg-[#fff1ed] text-[#a64c42]' : 'border-[#c9e1da] bg-[#e5f4ee] text-[#287362]')} data-testid="status-api-health"><span className={cn('h-1.5 w-1.5 rounded-full', healthQuery.isError ? 'bg-[#c96a5d]' : 'bg-[#54b4a2]')} /> {healthQuery.isError ? 'Live data reconnecting' : 'Live data connected'}</span>
-            <span className="hidden rounded-full border border-[#d7e5e2] bg-[#f8fcf9] px-3 py-2 sm:inline-flex" data-testid="text-last-updated">Updated 2 min ago</span>
+          <div className="flex flex-col items-stretch gap-2 text-xs text-[#5f7a7d] sm:items-end">
+            <div className="flex items-center gap-2">
+              <span className={cn('flex items-center gap-2 rounded-full border px-3 py-2', healthQuery.isError ? 'border-[#edc4bc] bg-[#fff1ed] text-[#a64c42]' : 'border-[#c9e1da] bg-[#e5f4ee] text-[#287362]')} data-testid="status-api-health"><span className={cn('h-1.5 w-1.5 rounded-full', healthQuery.isError ? 'bg-[#c96a5d]' : 'bg-[#54b4a2]')} /> {healthQuery.isError ? 'Live data reconnecting' : 'Live data connected'}</span>
+              <span className="hidden rounded-full border border-[#d7e5e2] bg-[#f8fcf9] px-3 py-2 sm:inline-flex" data-testid="text-last-updated">Updated 2 min ago</span>
+            </div>
+            <div className="flex items-center gap-2 rounded-2xl border border-[#c7dbd7] bg-[#f7fbf8] px-3 py-2">
+              <span className="font-mono text-[9px] uppercase tracking-[.13em] text-[#789294]">University</span>
+              <div className="relative">
+                <select value={selectedUniversity} onChange={(event) => selectUniversity(event.target.value)} className="appearance-none bg-transparent pr-6 text-xs font-bold text-[#315a61] outline-none" aria-label="Select university campus" data-testid="select-university">
+                  {campusProfiles.map((campus) => <option key={campus.id} value={campus.id}>{campus.shortName} · {campus.city}</option>)}
+                </select>
+                <ChevronDown size={13} className="pointer-events-none absolute right-0 top-0.5 text-[#6f8b8d]" />
+              </div>
+            </div>
           </div>
         </section>
 
@@ -367,7 +483,7 @@ function CampusWorkspace() {
           <section className="min-w-0">
             <div className="mb-3 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
               <div className="flex items-center gap-3">
-                <h2 className="font-display text-base font-bold tracking-[-.02em] text-[#234852]">Campus map</h2>
+                <h2 className="font-display text-base font-bold tracking-[-.02em] text-[#234852]">{campusProfile.shortName} campus map</h2>
                 <span className="font-mono text-[10px] uppercase tracking-[.13em] text-[#8aa09f]">1 : 4200</span>
               </div>
               <div className="flex items-center gap-2 overflow-x-auto pb-1">
@@ -438,7 +554,7 @@ function CampusWorkspace() {
             </div>
           </aside>
         </div>
-        <footer className="mt-8 flex flex-col justify-between gap-2 border-t border-[#d4e2df] pt-4 text-[10px] text-[#819796] sm:flex-row"><span>Visual Campus · Northbridge University</span><span className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-[#54b4a2]" /> {healthQuery.isError ? 'Some live services are offline' : 'All campus systems operational'} <span className="font-mono text-[#9db0ae]">v0.9.4</span></span></footer>
+         <footer className="mt-8 flex flex-col justify-between gap-2 border-t border-[#d4e2df] pt-4 text-[10px] text-[#819796] sm:flex-row"><span>Visual Campus · {campusProfile.name} · {campusProfile.area}</span><span className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-[#54b4a2]" /> {healthQuery.isError ? 'Some live services are offline' : 'All campus systems operational'} <span className="font-mono text-[#9db0ae]">v0.9.4</span></span></footer>
       </div>
     </main>
   );
