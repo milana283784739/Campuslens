@@ -1,0 +1,1 @@
+- [Generated client typings](generated-client-dom-iterable.md) — keep DOM iterable types enabled for Orval’s Headers.entries() helper.

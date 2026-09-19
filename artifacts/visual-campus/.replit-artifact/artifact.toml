@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Visual Campus"
+description = "Интерактивный цифровой двойник университетского кампуса с 2D/3D-картой, поиском помещений, доступной маршрутизацией и live-статусами инфраструктуры."
+version = "1.0.0"
+id = "artifacts/visual-campus"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 20921
+
+[services.development]
+run = "pnpm --filter @workspace/visual-campus run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/visual-campus", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/visual-campus/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "20921"
+BASE_PATH = "/"

@@ -1,6 +1,6 @@
-# [Project name]
+# Visual Campus
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Интерактивный цифровой двойник университета: поиск помещений, карта кампуса, доступные маршруты и live-статусы зон.
 
 ## Run & Operate
 
@@ -22,15 +22,20 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/visual-campus` — основной React/Vite интерфейс карты кампуса.
+- `artifacts/api-server/src/routes/campus.ts` — demo API для корпусов, мест, статусов и маршрутов.
+- `lib/api-spec/openapi.yaml` — источник API-контракта; после изменений запускать codegen.
+- `artifacts/visual-campus/src/index.css` — визуальная тема и map texture.
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Клиент использует сгенерированные React Query hooks из OpenAPI-контракта.
+- Карта в MVP — интерактивная SVG spatial-сцена: она быстрее загружается и сохраняет слои, этажи и маршруты без тяжёлой 3D-модели.
+- Demo campus data вынесена в API route, чтобы заменить её на PostGIS/real-time adapters без переписывания интерфейса.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+Visual Campus помогает студентам, гостям и сотрудникам находить аудитории и инфраструктуру, строить доступные маршруты по кампусу и видеть загруженность ключевых зон.
 
 ## User preferences
 
@@ -38,7 +43,8 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- После изменения `lib/api-spec/openapi.yaml` необходимо запускать `pnpm --filter @workspace/api-spec run codegen`.
+- Для проверки приложения используйте workflow `artifacts/visual-campus: web`; API доступен через `/api`.
 
 ## Pointers
 

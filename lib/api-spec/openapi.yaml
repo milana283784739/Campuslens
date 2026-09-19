@@ -10,6 +10,12 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: campus
+    description: Campus digital twin operations
+  - name: routing
+    description: Accessible campus routing
+  - name: live
+    description: Live occupancy and building status
 paths:
   /healthz:
     get:
@@ -24,6 +30,94 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /campus/summary:
+    get:
+      operationId: getCampusSummary
+      tags: [campus]
+      summary: Get campus overview
+      responses:
+        "200":
+          description: Campus overview
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CampusSummary"
+  /campus/buildings:
+    get:
+      operationId: listBuildings
+      tags: [campus]
+      summary: List campus buildings
+      responses:
+        "200":
+          description: Building list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Building"
+  /campus/places:
+    get:
+      operationId: searchPlaces
+      tags: [campus]
+      summary: Search campus places
+      parameters:
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: buildingId
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: floor
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Matching places
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CampusPlace"
+  /campus/statuses:
+    get:
+      operationId: listPlaceStatuses
+      tags: [live]
+      summary: Get live place occupancy
+      responses:
+        "200":
+          description: Live statuses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PlaceStatus"
+  /routes:
+    post:
+      operationId: buildRoute
+      tags: [routing]
+      summary: Build an accessible route
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RouteInput"
+      responses:
+        "200":
+          description: Calculated route
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RouteResponse"
 components:
   schemas:
     HealthStatus:
@@ -33,4 +127,147 @@ components:
           type: string
       required:
         - status
+    CampusSummary:
+      type: object
+      required:
+        - buildings
+        - rooms
+        - activeEvents
+        - liveZones
+      properties:
+        buildings:
+          type: integer
+        rooms:
+          type: integer
+        activeEvents:
+          type: integer
+        liveZones:
+          type: integer
+    Building:
+      type: object
+      required:
+        - id
+        - code
+        - name
+        - floors
+        - accent
+        - position
+      properties:
+        id:
+          type: string
+        code:
+          type: string
+        name:
+          type: string
+        floors:
+          type: integer
+        accent:
+          type: string
+        position:
+          type: object
+          required: [x, y]
+          properties:
+            x:
+              type: number
+            y:
+              type: number
+    CampusPlace:
+      type: object
+      required:
+        - id
+        - name
+        - type
+        - buildingId
+        - floor
+        - nodeId
+        - accessible
+        - x
+        - y
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        buildingId:
+          type: string
+        floor:
+          type: integer
+        nodeId:
+          type: string
+        accessible:
+          type: boolean
+        x:
+          type: number
+        y:
+          type: number
+        capacity:
+          type: ["integer", "null"]
+        details:
+          type: ["string", "null"]
+    PlaceStatus:
+      type: object
+      required:
+        - placeId
+        - current
+        - capacity
+        - status
+        - updatedAt
+      properties:
+        placeId:
+          type: string
+        current:
+          type: integer
+        capacity:
+          type: integer
+        status:
+          type: string
+          enum: [available, moderate, busy, closed]
+        updatedAt:
+          type: string
+    RouteInput:
+      type: object
+      required:
+        - startNodeId
+        - destinationNodeId
+      properties:
+        startNodeId:
+          type: string
+        destinationNodeId:
+          type: string
+        accessibleOnly:
+          type: boolean
+          default: false
+    RouteResponse:
+      type: object
+      required:
+        - distanceMeters
+        - durationMinutes
+        - floors
+        - accessible
+        - steps
+      properties:
+        distanceMeters:
+          type: number
+        durationMinutes:
+          type: integer
+        floors:
+          type: array
+          items:
+            type: integer
+        accessible:
+          type: boolean
+        steps:
+          type: array
+          items:
+            type: object
+            required: [label, detail, kind]
+            properties:
+              label:
+                type: string
+              detail:
+                type: string
+              kind:
+                type: string
 
